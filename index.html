@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ระบบสร้างตารางควบคุมการจัดให้มีการเลือกตั้ง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="app-bar no-print">
+  <div class="app-bar-inner">
+    <div class="app-bar-text">
+      <h1 id="app-title">ระบบสร้างตารางควบคุมการจัดให้มีการเลือกตั้ง</h1>
+      <p id="app-subtitle">เลือกวันเลือกตั้ง ระบบจะคำนวณกำหนดการทุกกิจกรรมและสร้างตารางนับถอยหลังให้อัตโนมัติ</p>
+    </div>
+    <nav class="app-nav" aria-label="เมนู">
+      <a id="nav-admin" class="nav-link" href="#admin">ผู้ดูแลระบบ</a>
+      <a id="nav-home" class="nav-link" href="#" hidden>← กลับหน้าหลัก</a>
+    </nav>
+  </div>
+</header>
+
+<main id="app-view">
+  <section class="card no-print" aria-labelledby="form-title">
+    <h2 id="form-title" class="card-title">ข้อมูลการเลือกตั้ง</h2>
+
+    <div class="form-grid">
+      <div class="field">
+        <label for="f-case">กรณี</label>
+        <select id="f-case"></select>
+        <small id="h-deadline" class="hint"></small>
+      </div>
+      <div class="field strong">
+        <label for="f-vacancy" id="l-vacancy">วันที่ตำแหน่งว่าง</label>
+        <input type="date" id="f-vacancy">
+        <small id="h-vacancy" class="hint"></small>
+      </div>
+      <div class="field strong">
+        <label for="f-election">วันเลือกตั้ง</label>
+        <input type="date" id="f-election" required>
+        <small id="h-election" class="hint"></small>
+      </div>
+      <div class="field">
+        <span>การคำนวณ</span>
+        <label class="check">
+          <input type="checkbox" id="f-auto">
+          คำนวณวันเลือกตั้งอัตโนมัติ
+        </label>
+        <small class="hint">วันอาทิตย์สุดท้ายก่อนครบกำหนด (แก้วันเลือกตั้งเองได้)</small>
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <div class="field">
+        <label for="f-position">ตำแหน่ง</label>
+        <input id="f-position" placeholder="เลือกหรือพิมพ์ตำแหน่ง">
+      </div>
+      <div class="field">
+        <label for="f-orgtype">ประเภท อปท.</label>
+        <input id="f-orgtype" placeholder="ค้นหาประเภท">
+      </div>
+      <div class="field">
+        <label for="f-province">จังหวัด</label>
+        <input id="f-province" placeholder="ค้นหาจังหวัด">
+      </div>
+      <div class="field">
+        <label for="f-district">อำเภอ</label>
+        <input id="f-district" placeholder="ค้นหาอำเภอ">
+      </div>
+      <div class="field">
+        <label for="f-orgname">ชื่อ อปท.</label>
+        <input id="f-orgname" placeholder="เลือกหรือพิมพ์ชื่อ">
+      </div>
+      <div class="field">
+        <label for="f-zone">เขตเลือกตั้งที่</label>
+        <input id="f-zone" placeholder="เลือกเขต">
+        <small id="h-zone" class="hint" aria-live="polite"></small>
+      </div>
+    </div>
+    <p id="h-office" class="hint office-preview"></p>
+    <div id="member-rows"></div>
+    <div class="member-actions">
+      <button type="button" id="btn-add-member" class="btn"><span aria-hidden="true">＋</span>กดเพื่อเพิ่ม</button>
+      <span id="add-member-hint" class="hint">สมาชิกสภาท้องถิ่น · พิมพ์รวมกับตำแหน่งด้านบน</span>
+    </div>
+
+    <div class="field">
+      <label for="f-notes">หมายเหตุเพิ่มเติม (แสดงในกรอบหมายเหตุ บรรทัดละ 1 ข้อ)</label>
+      <textarea id="f-notes" rows="2"></textarea>
+    </div>
+  </section>
+
+  <div id="alerts" class="alerts no-print" aria-live="polite"></div>
+
+  <section id="dashboard" class="dash no-print" aria-label="แดชบอร์ดนับถอยหลัง"></section>
+
+  <section class="toolbar no-print" aria-label="เครื่องมือ">
+    <div class="seg" role="group" aria-label="รูปแบบตาราง">
+      <button type="button" data-view="all">ทั้ง 2 ช่วง</button>
+      <button type="button" data-view="top">ช่วงที่ 1</button>
+      <button type="button" data-view="bottom">ช่วงที่ 2</button>
+    </div>
+    <span class="spacer"></span>
+    <div class="actions">
+      <a class="btn" href="#admin">ตั้งค่า (ผู้ดูแลระบบ)</a>
+      <button type="button" id="btn-csv" class="btn">ดาวน์โหลด Excel (CSV)</button>
+      <button type="button" id="btn-print" class="btn primary">พิมพ์ / บันทึก PDF</button>
+    </div>
+  </section>
+
+  <div id="custom-banner" class="custom-banner no-print" aria-live="polite"></div>
+
+  <section id="paper" class="paper" aria-label="ตารางควบคุม">
+    <header class="paper-head">
+      <h2 id="t1"></h2>
+      <p id="t2"></p>
+    </header>
+    <div id="charts"></div>
+    <div id="notes" class="notes-wrap"></div>
+  </section>
+
+  <!-- ทุกเขต: หน้าละเขตสำหรับพิมพ์ (ซ่อนบนจอ) -->
+  <div id="print-copies" class="print-only"></div>
+
+  <section class="card summary-card" aria-labelledby="sum-title">
+    <h2 id="sum-title" class="card-title">สรุปกำหนดการ</h2>
+    <div class="table-wrap"><table id="summary" class="summary"></table></div>
+  </section>
+</main>
+
+<main id="admin-view" class="admin no-print" aria-label="ผู้ดูแลระบบ" hidden></main>
+
+<dialog id="day-dlg" class="day-dlg" aria-labelledby="day-title">
+  <div class="dlg">
+    <header class="dlg-head">
+      <div>
+        <h2 id="day-title"></h2>
+        <p id="day-sub" class="hint"></p>
+      </div>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="day-close" aria-label="ปิด">✕</button>
+    </header>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="day-add-input">เพิ่มกิจกรรมในวันนี้</label>
+        <input id="day-add-input" placeholder="เลือกกิจกรรมเดิมเพื่อย้ายมาวันนี้ หรือพิมพ์ชื่อกิจกรรมใหม่">
+        <small class="hint">พิมพ์ค้นหาได้ · กด Enter เพื่อเพิ่ม</small>
+      </div>
+      <h3 id="day-count" class="day-count"></h3>
+      <div id="day-list"></div>
+    </div>
+    <footer class="dlg-foot">
+      <label class="check small">
+        <input type="checkbox" id="day-default">
+        ใช้เป็นกำหนดการมาตรฐานของกรณีนี้ (ทุกการเลือกตั้ง)
+      </label>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="day-cancel">ยกเลิก</button>
+      <button type="button" class="btn primary" id="day-save">บันทึก</button>
+    </footer>
+  </div>
+</dialog>
+
+<script src="data/thai-admin.js"></script>
+<script src="data/village-counts.js"></script>
+<script src="data/pao-zones.js"></script>
+<script src="js/config.js"></script>
+<script src="js/combobox.js"></script>
+<script src="js/members.js"></script>
+<script src="js/app.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/editor.js"></script>
+</body>
+</html>
